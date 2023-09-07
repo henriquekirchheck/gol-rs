@@ -1,4 +1,4 @@
-use crate::lifealgo::{Cell, Coords, LifeAlgo};
+use crate::lifealgo::{Cell, Coords, InvalidCoordsError, InvalidSizeError, LifeAlgo};
 
 pub struct GameOfLife {
     width: usize,
@@ -7,8 +7,12 @@ pub struct GameOfLife {
 }
 
 impl GameOfLife {
-    fn get_index_from_coords(&self, coords: Coords) -> usize {
-        coords.x + coords.y * self.width
+    fn get_index_from_coords(&self, coords: Coords) -> Result<usize, InvalidCoordsError> {
+        if coords.x >= self.width || coords.y >= self.height {
+            Err(InvalidCoordsError)
+        } else {
+            Ok(coords.x + coords.y * self.width)
+        }
     }
 }
 
@@ -23,24 +27,39 @@ impl LifeAlgo for GameOfLife {
         }
     }
 
-    fn get_cell(&self, coords: Coords) -> Cell {
+    fn get_size(&self) -> (usize, usize) {
+        (self.width, self.height)
+    }
+
+    fn get_cell(&self, coords: Coords) -> Result<Cell, InvalidCoordsError> {
+        self.grid
+            .get(self.get_index_from_coords(coords)?)
+            .map(ToOwned::to_owned)
+            .ok_or(InvalidCoordsError)
+    }
+
+    fn set_cell(&mut self, coords: Coords, new_state: Cell) -> Result<(), InvalidCoordsError> {
+        let index = self.get_index_from_coords(coords)?;
+        let cell = self.grid.get_mut(index).ok_or(InvalidCoordsError)?;
+        *cell = new_state;
+        Ok(())
+    }
+
+    fn get_next_cell(&self, coords: Coords) -> Result<Cell, InvalidCoordsError> {
         todo!()
     }
 
-    fn set_cell(&mut self, coords: Coords, new_state: Cell) {
-        todo!()
+    fn get_state(&self) -> &Self::Grid {
+        &self.grid
     }
 
-    fn get_next_cell(&self, coords: Coords) -> Cell {
-        todo!()
-    }
-
-    fn get_current_state(&self) -> Self::Grid {
-        todo!()
-    }
-
-    fn set_current_state(&mut self, state: Self::Grid) {
-        todo!()
+    fn set_state(&mut self, state: Self::Grid) -> Result<(), InvalidSizeError> {
+        if state.len() != self.width * self.height {
+            Err(InvalidSizeError)
+        } else {
+            // self.grid;
+            Ok(())
+        }
     }
 
     fn get_next_state(&self) -> Self::Grid {
@@ -48,7 +67,7 @@ impl LifeAlgo for GameOfLife {
     }
 
     fn get_population(&self) -> u128 {
-        todo!()
+        self.grid.iter().map(|x| *x as u8 as u128).sum()
     }
 
     fn step(&self) {
