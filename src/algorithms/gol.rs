@@ -51,25 +51,6 @@ impl LifeAlgo for GameOfLife {
     }
 
     fn get_cell_number_neighbours(&self, coords: Coords) -> Result<u8, InvalidCoordsError> {
-        // let mut num_neighbours = 0u8;
-        // for offset_x in -1..=1 {
-        //     for offset_y in -1..=1 {
-        //         if offset_x == 0 && offset_y == 0 {
-        //             continue;
-        //         }
-        //         let neighbour_coords = Coords {
-        //             x: wrap_around(offset_x + coords.x as isize, self.width as isize),
-        //             y: wrap_around(offset_y + coords.y as isize, self.height as isize),
-        //         };
-        //         let neighbours = self
-        //             .grid
-        //             .get(self.get_index_from_coords(neighbour_coords)?)
-        //             .ok_or(InvalidCoordsError)?;
-        //         num_neighbours += *neighbours as u8;
-        //     }
-        // }
-        // Ok(num_neighbours);
-
         (-1..=1)
             .cartesian_product(-1..=1)
             .par_bridge()
