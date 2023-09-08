@@ -1,1 +1,1 @@
-mod gol;
+pub mod gol;
