@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use itertools::Itertools;
 use rayon::prelude::{ParallelBridge, ParallelIterator};
@@ -18,6 +18,29 @@ impl GameOfLife {
         } else {
             Ok(coords.x + coords.y * self.width)
         }
+    }
+
+    fn display_terminal(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let cell = self.grid[self
+                    .get_index_from_coords(Coords { x, y })
+                    .expect("what the fuck?")];
+                let symbol = match cell {
+                    Cell::Alive => "#",
+                    Cell::Dead => " ",
+                };
+                write!(f, "{}", symbol)?;
+                if x != self.width - 1 {
+                    write!(f, " ")?;
+                }
+            }
+            if y != self.height - 1 {
+                write!(f, "\n")?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -161,25 +184,13 @@ impl LifeAlgo for GameOfLife {
 impl Debug for GameOfLife {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Dimentions: {}x{}", self.width, self.height)?;
-
-        for y in 0..self.height {
-            write!(f, "\n")?;
-            for x in 0..self.width {
-                let cell = self.grid[self
-                    .get_index_from_coords(Coords { x, y })
-                    .expect("what the fuck?")];
-
-                write!(
-                    f,
-                    "{} ",
-                    match cell {
-                        Cell::Alive => "#",
-                        Cell::Dead => " ",
-                    }
-                )?
-            }
-        }
-
+        self.display_terminal(f)?;
+        Ok(())
+    }
+}
+impl Display for GameOfLife {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.display_terminal(f)?;
         Ok(())
     }
 }
