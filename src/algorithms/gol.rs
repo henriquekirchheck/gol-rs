@@ -45,8 +45,6 @@ impl GameOfLife {
 }
 
 impl LifeAlgo for GameOfLife {
-    type Grid = Vec<Cell>;
-
     fn new(width: usize, height: usize) -> Self {
         Self {
             width,
@@ -59,10 +57,10 @@ impl LifeAlgo for GameOfLife {
         (self.width, self.height)
     }
 
-    fn get_cell(&self, coords: Coords) -> Result<Cell, InvalidCoordsError> {
+    fn get_cell(&self, coords: Coords) -> Result<&Cell, InvalidCoordsError> {
         self.grid
             .get(self.get_index_from_coords(coords)?)
-            .map(ToOwned::to_owned)
+            // .map(ToOwned::to_owned)
             .ok_or(InvalidCoordsError)
     }
 
@@ -109,26 +107,35 @@ impl LifeAlgo for GameOfLife {
         }
     }
 
-    fn get_state(&self) -> &Self::Grid {
-        &self.grid
+    fn get_state(&self) -> impl Iterator<Item = (Coords, &Cell)> {
+        (0..self.width)
+            .cartesian_product(0..self.height)
+            .map(|(x, y)| Coords { x, y })
+            .map(|coords| (coords, self.get_cell(coords).expect("what the fuck?")))
     }
 
-    fn set_state(&mut self, state: Self::Grid) -> Result<(), InvalidSizeError> {
-        if state.len() != self.width * self.height {
+    fn set_state(
+        &mut self,
+        state: impl Iterator<Item = (Coords, Cell)> + Clone,
+    ) -> Result<(), InvalidSizeError> {
+        if state.clone().count() != self.width * self.height {
             Err(InvalidSizeError)
         } else {
-            self.grid = state;
+            for (coords, cell) in state {
+                self.set_cell(coords, cell).expect("what the fuck?");
+            }
             Ok(())
         }
     }
 
-    fn get_next_state(&self) -> Self::Grid {
+    fn get_next_state(&self) -> impl Iterator<Item = (Coords, Cell)> {
         (0..self.width)
             .cartesian_product(0..self.height)
             .par_bridge()
-            .map(|(x, y)| self.get_next_cell(Coords { x, y }))
-            .collect::<Result<Self::Grid, InvalidCoordsError>>()
-            .expect("What the fuck?")
+            .map(|(x, y)| Coords { x, y })
+            .map(|coords| (coords, self.get_next_cell(coords).expect("what the fuck?")))
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
     fn get_population(&self) -> u128 {

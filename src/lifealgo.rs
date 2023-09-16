@@ -29,21 +29,19 @@ pub struct InvalidCoordsError;
 pub struct InvalidSizeError;
 
 pub trait LifeAlgo {
-    type Grid;
-
     fn new(width: usize, height: usize) -> Self;
     fn get_size(&self) -> (usize, usize);
-    fn get_cell(&self, coords: Coords) -> Result<Cell, InvalidCoordsError>;
+    fn get_cell(&self, coords: Coords) -> Result<&Cell, InvalidCoordsError>;
     fn set_cell(&mut self, coords: Coords, new_state: Cell) -> Result<(), InvalidCoordsError>;
     fn get_cell_number_neighbours(&self, coords: Coords) -> Result<u8, InvalidCoordsError>;
     fn get_next_cell(&self, coords: Coords) -> Result<Cell, InvalidCoordsError>;
-    fn get_state(&self) -> &Self::Grid;
-    fn set_state(&mut self, state: Self::Grid) -> Result<(), InvalidSizeError>;
+    fn get_state(&self) -> impl Iterator<Item = (Coords, &Cell)>;
+    fn set_state(&mut self, state: impl Iterator<Item = (Coords, Cell)> + Clone) -> Result<(), InvalidSizeError>;
     fn set_state_with(&mut self, state: Cell);
     fn set_state_fn<F>(&mut self, func: F)
     where
         F: Fn(Coords) -> Cell;
-    fn get_next_state(&self) -> Self::Grid;
+    fn get_next_state(&self) -> impl Iterator<Item = (Coords, Cell)>;
     fn get_population(&self) -> u128;
     fn step(&mut self);
 }
